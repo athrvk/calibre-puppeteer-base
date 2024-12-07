@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get -qq install -y \
     # Basic utilities
     wget \
     xz-utils \
@@ -56,20 +56,20 @@ RUN wget -qO- https://deb.nodesource.com/setup_20.x | bash - \
 RUN CALIBRE_VERSION=$(curl -sX GET "https://api.github.com/repos/kovidgoyal/calibre/releases/latest" | grep -Po '"tag_name": "\K[^"]*') \
     && CALIBRE_VERSION_NUM=$(echo ${CALIBRE_VERSION} | cut -c2-) \
     && CALIBRE_URL="https://download.calibre-ebook.com/${CALIBRE_VERSION_NUM}/calibre-${CALIBRE_VERSION_NUM}-x86_64.txz" \
-    && wget -O /tmp/calibre-tarball.txz "$CALIBRE_URL" \
+    && wget -qO /tmp/calibre-tarball.txz "$CALIBRE_URL" \
     && mkdir -p /opt/calibre \
-    && tar -xvf /tmp/calibre-tarball.txz -C /opt/calibre \
+    && tar -xf /tmp/calibre-tarball.txz -C /opt/calibre \
     && /opt/calibre/calibre_postinstall \
     && rm /tmp/calibre-tarball.txz \
     && dbus-uuidgen > /etc/machine-id
 
 
 RUN apt-get update \
-    && apt-get install -y wget gnupg \
+    && apt-get -qq install -y \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
-    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+    && apt-get -qq install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
         gconf-service libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation libappindicator1 libnss3 lsb-release xdg-utils \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*

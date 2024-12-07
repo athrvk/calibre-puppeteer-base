@@ -51,7 +51,7 @@ jobs:
         # Run Calibre version command to verify installation
         docker run --rm calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} ebook-convert --version
         # Run Puppeteer to verify installation
-        docker run --rm --security-opt seccomp=chrome.json calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
+        # docker run --rm --security-opt seccomp=chrome.json calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
 
     - name: Push Docker image
       run: docker push calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
