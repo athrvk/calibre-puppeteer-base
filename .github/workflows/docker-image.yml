@@ -54,4 +54,10 @@ jobs:
         # docker run --rm --security-opt seccomp=chrome.json calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
 
     - name: Push Docker image
-      run: docker push calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
+      run: | 
+        docker logout
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        docker tag calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} athrvk/calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
+        docker tag calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} athrvk/calibre-puppeteer-base:latest
+        docker push athrvk/calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
+        docker push athrvk/calibre-puppeteer-base:latest
