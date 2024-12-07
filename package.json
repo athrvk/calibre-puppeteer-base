@@ -1,0 +1,15 @@
+{
+  "name": "calibre-puppeteer-base",
+  "version": "1.0.0",
+  "description": "This repository contains a Dockerfile for creating a base image with Calibre and Puppeteer pre-installed. This image is built on top of Ubuntu 22.04 and includes all necessary dependencies for running Calibre and Puppeteer.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "puppeteer": "latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

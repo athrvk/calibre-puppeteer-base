@@ -28,14 +28,14 @@ jobs:
         images: calibre-puppeteer-base
 
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag calibre-puppeteer-base:${{ steps.meta.outputs.tags }}
+      run: docker build . --file Dockerfile --tag athrvk/calibre-puppeteer-base:${{ steps.meta.outputs.tags }}
 
     - name: Verification step
       run: |
         # Run Calibre version command to verify installation
-        docker run --rm calibre-puppeteer-base:${{ steps.meta.outputs.tags }} ebook-convert --version
+        docker run --rm athrvk/calibre-puppeteer-base:${{ steps.meta.outputs.tags }} ebook-convert --version
         # Run Puppeteer to verify installation
-        docker run --rm calibre-puppeteer-base:${{ steps.meta.outputs.tags }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
+        docker run --rm --security-opt seccomp=chrome.json athrvk/calibre-puppeteer-base:${{ steps.meta.outputs.tags }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
 
     - name: Build and push Docker image
       if: success() # Ensures this step runs only if the previous steps are successful

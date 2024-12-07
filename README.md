@@ -47,7 +47,7 @@ The Dockerfile includes a step to verify the installations of Calibre and Puppet
 
 ## Maintainer
 
-This image is maintained by [Atharva Kusumbia](mailto:atharvakusumbia@gmail.com).
+This image is maintained by [athrv.k](mailto:atharvakusumbia@gmail.com).
 
 ## License
 
