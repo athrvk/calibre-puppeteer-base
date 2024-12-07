@@ -14,16 +14,31 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
+    
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v4
       with:
         images: calibre-puppeteer-base
+
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag calibre-puppeteer-base:${{ steps.meta.outputs.tags }}
+
+    - name: Verification step
+      run: |
+        # Run Calibre version command to verify installation
+        docker run --rm calibre-puppeteer-base:${{ steps.meta.outputs.tags }} ebook-convert --version
+        # Run Puppeteer to verify installation
+        docker run --rm calibre-puppeteer-base:${{ steps.meta.outputs.tags }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
+
     - name: Build and push Docker image
+      if: success() # Ensures this step runs only if the previous steps are successful
       uses: docker/build-push-action@v4
       with:
         context: .
