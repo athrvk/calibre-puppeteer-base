@@ -1,5 +1,7 @@
 # Calibre and Puppeteer Base Image
 
+[![Docker Image Version](https://img.shields.io/docker/v/athrvk/calibre-puppeteer-base)](https://hub.docker.com/repository/docker/athrvk/calibre-puppeteer-base/general)
+
 This repository contains a Dockerfile for creating a base image with Calibre and Puppeteer pre-installed. This image is built on top of Ubuntu 22.04 and includes all necessary dependencies for running Calibre and Puppeteer.
 
 ## Features
