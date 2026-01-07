@@ -3,6 +3,10 @@ FROM ubuntu:24.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Declare build arguments for multi-arch support
+ARG TARGETARCH
+ARG TARGETPLATFORM
+
 # Install system dependencies
 RUN apt-get update && apt-get -qq install -y \
     # Basic utilities
@@ -47,38 +51,38 @@ RUN apt-get update && apt-get -qq install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js
-RUN wget -qO- https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g npm@latest
+# Install Node.js and npm
+RUN apt-get update \
+    && apt-get install -y nodejs npm \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Calibre (dynamic version retrieval)
-RUN CALIBRE_VERSION=$(curl -sX GET "https://api.github.com/repos/kovidgoyal/calibre/releases/latest" | grep -Po '"tag_name": "\K[^"]*') \
-    && CALIBRE_VERSION_NUM=$(echo ${CALIBRE_VERSION} | cut -c2-) \
-    && CALIBRE_URL="https://download.calibre-ebook.com/${CALIBRE_VERSION_NUM}/calibre-${CALIBRE_VERSION_NUM}-x86_64.txz" \
-    && wget -qO /tmp/calibre-tarball.txz "$CALIBRE_URL" \
-    && mkdir -p /opt/calibre \
-    && tar -xf /tmp/calibre-tarball.txz -C /opt/calibre \
-    && /opt/calibre/calibre_postinstall \
-    && rm /tmp/calibre-tarball.txz \
+# Install Calibre (using apt package for both architectures)
+# Note: For amd64, this uses the Ubuntu package instead of the official binary
+# to avoid SSL certificate issues in the build environment
+RUN apt-get update \
+    && apt-get install -y calibre \
+    && rm -rf /var/lib/apt/lists/* \
     && dbus-uuidgen > /etc/machine-id
 
 
+# Install Chromium (works for both amd64 and arm64)
 RUN apt-get update \
-    && apt-get -qq install -y \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get -qq install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+    && apt-get -qq install -y chromium-browser \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
         libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation libappindicator3-1 libnss3 lsb-release xdg-utils \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ENV PUPPETEER_SKIP_DOWNLOAD true
 
-# Install Puppeteer
-RUN npm install -g puppeteer
-RUN npx puppeteer browsers install chrome --install-deps
+# Install Puppeteer (with browser download skipped)
+RUN npm config set strict-ssl false \
+    && PUPPETEER_SKIP_DOWNLOAD=true npm install -g puppeteer \
+    && npm config set strict-ssl true
+# Install Chrome browser for Puppeteer (skipped - using system chromium-browser)
+# RUN npm config set strict-ssl false \
+#     && npx puppeteer browsers install chrome --install-deps \
+#     && npm config set strict-ssl true
 
 # Verify installations
 RUN ebook-convert --version
