@@ -52,10 +52,10 @@ RUN apt-get update && apt-get -qq install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js and npm
-RUN apt-get update \
-    && apt-get install -y nodejs npm \
-    && rm -rf /var/lib/apt/lists/*
+# Install Node.js
+RUN wget -qO- https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
 
 # Install Calibre (using apt package for both architectures)
 # Note: For amd64, this uses the Ubuntu package instead of the official binary
