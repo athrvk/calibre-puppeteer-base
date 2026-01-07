@@ -57,32 +57,30 @@ RUN wget -qO- https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm@latest
 
-# Install Calibre (using apt package for both architectures)
-# Note: For amd64, this uses the Ubuntu package instead of the official binary
-# to avoid SSL certificate issues in the build environment
+# Install Calibre
 RUN apt-get update \
-    && apt-get install -y calibre \
+    && apt-get -qq install -y calibre \
     && rm -rf /var/lib/apt/lists/* \
     && dbus-uuidgen > /etc/machine-id
 
-# Install Chromium (works for both amd64 and arm64)
+# Install Chrome dependencies for Puppeteer
 RUN apt-get update \
-    && apt-get -qq install -y chromium-browser \
-        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-        libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 ca-certificates fonts-liberation libappindicator3-1 libnss3 lsb-release xdg-utils \
-      --no-install-recommends \
+    && apt-get -qq install -y \
+        fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf \
+        libasound2t64 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 \
+        libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 \
+        libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 \
+        libxrandr2 libxrender1 libxss1 libxtst6 fonts-liberation libappindicator3-1 libnss3 lsb-release xdg-utils \
+        --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Puppeteer (with browser download skipped)
+# Install Puppeteer and Chrome browser
 # Note: SSL verification is temporarily disabled due to certificate chain issues in some build environments
 # The strict-ssl setting is restored immediately after installation
 RUN npm config set strict-ssl false \
-    && PUPPETEER_SKIP_DOWNLOAD=true npm install -g puppeteer \
+    && npm install -g puppeteer \
+    && npx puppeteer browsers install chrome \
     && npm config set strict-ssl true
-# Install Chrome browser for Puppeteer (skipped - using system chromium-browser)
-# RUN npm config set strict-ssl false \
-#     && npx puppeteer browsers install chrome --install-deps \
-#     && npm config set strict-ssl true
 
 # Verify installations
 RUN ebook-convert --version
@@ -98,11 +96,11 @@ RUN node -v && npm -v
 # Run everything after as non-privileged user.
 # USER pptruser
 
+# Copy test files and verify Puppeteer works
+# WORKDIR /app
 # COPY package.json package.json
 # COPY index.js index.js
-# RUN npm i
-# RUN npm start
-# RUN rm -rf ./*
+# RUN set -e && npm i && npm start && rm -rf /app/*
 
 # Usage instructions in label
 LABEL maintainer="atharvakusumbia@gmail.com" \
