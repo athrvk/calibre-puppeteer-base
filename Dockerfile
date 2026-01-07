@@ -36,7 +36,6 @@ RUN apt-get update && apt-get -qq install -y \
     libgl1 \
     libglx-mesa0 \
     libgl1-mesa-dri \
-    libgl1-mesa-glx \
     # Font support
     fonts-wqy-microhei \
     ttf-wqy-zenhei \
