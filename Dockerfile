@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get -qq install -y \
     # Basic utilities
     wget \
+    curl \
     xz-utils \
     gnupg \
     # X11 and GUI dependencies
