@@ -4,6 +4,7 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Declare build arguments for multi-arch support
+# These are automatically provided by Docker buildx and can be used for platform-specific logic
 ARG TARGETARCH
 ARG TARGETPLATFORM
 
@@ -64,7 +65,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && dbus-uuidgen > /etc/machine-id
 
-
 # Install Chromium (works for both amd64 and arm64)
 RUN apt-get update \
     && apt-get -qq install -y chromium-browser \
@@ -73,9 +73,9 @@ RUN apt-get update \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# ENV PUPPETEER_SKIP_DOWNLOAD true
-
 # Install Puppeteer (with browser download skipped)
+# Note: SSL verification is temporarily disabled due to certificate chain issues in some build environments
+# The strict-ssl setting is restored immediately after installation
 RUN npm config set strict-ssl false \
     && PUPPETEER_SKIP_DOWNLOAD=true npm install -g puppeteer \
     && npm config set strict-ssl true
