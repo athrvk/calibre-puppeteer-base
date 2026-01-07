@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get -qq install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js
-RUN wget -qO- https://deb.nodesource.com/setup_20.x | bash - \
+RUN wget -qO- https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm@latest
 

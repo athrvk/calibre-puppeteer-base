@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Multiplatform Build
 
 on:
   push:
@@ -15,15 +15,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
     
     - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Read the current version
       id: get_version
-      run: echo "::set-output name=version::$(cat VERSION)"
+      run: echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
 
     - name: Increment the version
       id: increment_version
@@ -33,7 +39,7 @@ jobs:
         version_parts[2]=$((version_parts[2] + 1))
         new_version="${version_parts[0]}.${version_parts[1]}.${version_parts[2]}"
         echo $new_version > VERSION
-        echo "::set-output name=new_version::$new_version"
+        echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
     - name: Commit the new version
       run: |
@@ -43,21 +49,21 @@ jobs:
         git commit -m "Increment version to ${{ steps.increment_version.outputs.new_version }}"
         git push
 
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
+    - name: Build and push Docker image (multiplatform)
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: |
+          athrvk/calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
+          athrvk/calibre-puppeteer-base:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: false
 
     - name: Verification step
       run: |
-        # Run Calibre version command to verify installation
-        docker run --rm calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} ebook-convert --version
-        # Run Puppeteer to verify installation
-        # docker run --rm --security-opt seccomp=chrome.json calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} node -e "const browser = require('puppeteer').launch(); console.log('Puppeteer works')"
-
-    - name: Push Docker image
-      run: | 
-        docker logout
-        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-        docker tag calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} athrvk/calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
-        docker tag calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} athrvk/calibre-puppeteer-base:latest
-        docker push athrvk/calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }}
-        docker push athrvk/calibre-puppeteer-base:latest
+        # Run Calibre version command to verify installation (amd64 only for verification)
+        docker run --rm --platform linux/amd64 athrvk/calibre-puppeteer-base:${{ steps.increment_version.outputs.new_version }} ebook-convert --version
