@@ -86,6 +86,38 @@ RUN npm config set strict-ssl false \
 RUN ebook-convert --version
 RUN node -v && npm -v
 
+# Copy verification script
+COPY verify-chrome-arch.sh /usr/local/bin/verify-chrome-arch.sh
+RUN chmod +x /usr/local/bin/verify-chrome-arch.sh
+
+# Verify Chrome binary architecture matches system architecture
+RUN echo "=== Verifying Chrome Binary Architecture ===" \
+    && echo "System Architecture: $(uname -m)" \
+    && echo "Target Architecture: ${TARGETARCH}" \
+    && CHROME_PATH=$(find /root/.cache/puppeteer -name chrome -type f 2>/dev/null | head -1) \
+    && if [ -n "$CHROME_PATH" ]; then \
+        echo "Chrome binary found: $CHROME_PATH"; \
+        echo "Chrome binary architecture:"; \
+        file "$CHROME_PATH"; \
+        echo "Testing Chrome execution:"; \
+        "$CHROME_PATH" --version || (echo "ERROR: Chrome binary failed to execute!" && exit 1); \
+        CHROME_ARCH=$(file "$CHROME_PATH" | grep -o "x86-64\|aarch64\|ARM aarch64" | head -1); \
+        SYSTEM_ARCH=$(uname -m); \
+        echo "Detected Chrome arch: $CHROME_ARCH"; \
+        echo "System arch: $SYSTEM_ARCH"; \
+        if [ "$SYSTEM_ARCH" = "x86_64" ] && echo "$CHROME_ARCH" | grep -q "x86-64"; then \
+            echo "✓ Architecture match: AMD64"; \
+        elif [ "$SYSTEM_ARCH" = "aarch64" ] && echo "$CHROME_ARCH" | grep -q "aarch64\|ARM"; then \
+            echo "✓ Architecture match: ARM64"; \
+        else \
+            echo "✗ WARNING: Architecture mismatch detected!"; \
+            echo "  System: $SYSTEM_ARCH, Chrome: $CHROME_ARCH"; \
+        fi; \
+    else \
+        echo "ERROR: Chrome binary not found!" && exit 1; \
+    fi \
+    && echo "=== Chrome verification successful ==="
+
 # WORKDIR /app
 
 # RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
